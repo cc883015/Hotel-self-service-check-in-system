@@ -176,14 +176,18 @@ app.post("/api/admin/login", async (c) => {
     return c.json({ error: "locked", retry_after: attempt.locked_until - t }, 429);
   }
 
-  const { username, password } = await c.req.json().catch(() => ({}));
-  if (!username || !password) return c.json({ error: "invalid_credentials" }, 400);
+  const body = await c.req.json().catch(() => ({}));
+  const rawUser = body.username;
+  const rawPass = body.password;
+  const usernameNorm = typeof rawUser === "string" ? rawUser.trim().toLowerCase() : "";
+  const passwordNorm = typeof rawPass === "string" ? rawPass.trim() : "";
+  if (!usernameNorm || !passwordNorm) return c.json({ error: "invalid_credentials" }, 400);
 
   const user = await c.env.DB.prepare(
     "SELECT username, password_hash FROM admin_users WHERE username = ?"
-  ).bind(username).first();
+  ).bind(usernameNorm).first();
 
-  const ok = user ? await verifyPassword(password, user.password_hash) : false;
+  const ok = user ? await verifyPassword(passwordNorm, user.password_hash) : false;
   if (!ok) {
     const newCount = (attempt?.fail_count || 0) + 1;
     const lockUntil = newCount >= 5 ? t + 15 * 60 : null;

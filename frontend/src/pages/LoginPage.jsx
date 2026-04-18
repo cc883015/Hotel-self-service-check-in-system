@@ -23,7 +23,7 @@ export default function LoginPage() {
     if (loading) return;
     setLoading(true); setError("");
     try {
-      await api.login(username.trim(), password);
+      await api.login(username.trim(), password.trim());
       navigate("/admin", { replace: true });
     } catch (err) {
       if (err.status === 429) {
@@ -36,7 +36,10 @@ export default function LoginPage() {
       } else if (err.status >= 500) {
         setError(`Server error (${err.status}). Check Cloudflare Worker logs or JWT / database bindings.`);
       } else {
-        setError("Incorrect username or password. Default username is cliffinnadmin (cliff + inn + admin).");
+        setError(
+          "Incorrect username or password. Defaults: cliffinnadmin / cliffinnadmin123 " +
+          "(if you changed the password in Settings, use the new one)."
+        );
       }
     } finally {
       setLoading(false);
