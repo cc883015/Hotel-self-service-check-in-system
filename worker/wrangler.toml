@@ -9,7 +9,7 @@ compatibility_date = "2025-01-15"
 [[d1_databases]]
 binding = "DB"
 database_name = "cliff_inn"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_id = "21ab9eb0-aa20-4eb0-a259-73c8c0df235a"
 
 # Daily cron at 04:00 UTC ≈ 14:00 Brisbane — deletes records older than 2 days.
 [triggers]
