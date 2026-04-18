@@ -10,26 +10,15 @@ This guide takes a clean laptop and a Cloudflare account to a live, QR-ready sys
 
 ---
 
-## GitHub — automatic deploys (VS Code → `git push`)
+## Frontend: GitHub + Cloudflare Pages (no extra tooling)
 
-| Piece | What to do |
-|-------|------------|
-| **Frontend (Pages)** | Cloudflare **Workers & Pages** → **Pages** → **Connect to Git** → each push to `main` runs your build (see Part 2). **No extra workflow file needed** for the React app. |
-| **Backend (Worker)** | This repo includes **`.github/workflows/deploy-worker.yml`**: on push to `main` when `worker/` (or the workflow) changes, GitHub Actions runs `wrangler deploy`. |
+1. Push this repo to GitHub (`main` branch).
+2. Cloudflare → **Workers & Pages** → **Pages** → **Create** → **Connect to Git** → choose the repo.
+3. Build settings: **Framework preset** None; **Build command** `cd frontend && npm install && npm run build`; **Build output directory** `frontend/dist`; root directory **empty**.
 
-### One-time setup: GitHub repository secrets
+Every push to `main` rebuilds the site. No GitHub Actions required.
 
-In GitHub: **Settings → Secrets and variables → Actions → New repository secret**, add:
-
-1. **`CLOUDFLARE_API_TOKEN`**  
-   Cloudflare dashboard → profile → **My Profile** → **API Tokens** → **Create Token**.  
-   Use template **Edit Cloudflare Workers**, or custom with at least **Account → Workers Scripts → Edit** for your account. Paste the token as the secret value.
-
-2. **`CLOUDFLARE_ACCOUNT_ID`**  
-   Cloudflare **Workers & Pages** → right column **Account ID**, or locally: `cd worker && npx wrangler whoami` (after `wrangler login`).
-
-Then push to `main`, or open **Actions** and **Run workflow** on **Deploy Worker**.  
-`JWT_SECRET` and D1 stay in Cloudflare; CI only uploads Worker code from the repo.
+The **Worker** (API) is deployed separately with `wrangler` (Part 1). When you only change frontend code, Pages handles it. When you change `worker/`, run `cd worker && npm run deploy` from your machine.
 
 ---
 
