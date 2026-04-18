@@ -12,6 +12,11 @@ import { getJwtSecret } from "./config.js";
 
 const app = new Hono();
 
+app.onError((err, c) => {
+  console.error("[worker]", err);
+  return c.json({ error: "internal_error" }, 500);
+});
+
 function jwtNotConfigured(c) {
   return c.json({
     error: "server_misconfigured",
@@ -40,16 +45,26 @@ app.use("/api/*", (c, next) => {
 const now = () => Math.floor(Date.now() / 1000);
 
 function getClientIP(c) {
-  return c.req.header("CF-Connecting-IP")
-      || c.req.header("X-Forwarded-For")?.split(",")[0].trim()
-      || "unknown";
+  const cf = c.req.header("CF-Connecting-IP") || c.req.header("Cf-Connecting-Ip");
+  if (cf) return cf.trim();
+  const xff = c.req.header("X-Forwarded-For");
+  if (xff) {
+    const first = xff.split(",")[0];
+    if (first) return first.trim();
+  }
+  return "unknown";
 }
 
 async function ensureAdmin(env) {
   const row = await env.DB.prepare(
-    "SELECT username FROM admin_users WHERE username = ?"
+    "SELECT username, password_hash FROM admin_users WHERE username = ?"
   ).bind("cliffinnadmin").first();
-  if (row) return;
+  // Cloudflare Web Crypto cannot verify pbkdf2 with >100k iterations (old default was 210k).
+  if (row?.password_hash?.startsWith("pbkdf2$210000$")) {
+    await env.DB.prepare("DELETE FROM admin_users WHERE username = ?").bind("cliffinnadmin").run();
+  } else if (row) {
+    return;
+  }
   const hash = await hashPassword("cliffinnadmin123");
   const t = now();
   await env.DB.prepare(

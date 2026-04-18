@@ -1,6 +1,6 @@
 // Auth utilities — all built on Web Crypto, no npm deps.
 //
-// - Password hashing: PBKDF2-SHA256 with 210_000 iterations (OWASP 2023).
+// - Password hashing: PBKDF2-SHA256 (100k iters — Cloudflare Workers Web Crypto max is 100_000).
 // - JWT: HS256, self-signed, verified in constant time.
 
 const enc = new TextEncoder();
@@ -26,7 +26,7 @@ function b64uDecode(str) {
 }
 
 // ---------- password hashing ----------
-const PBKDF2_ITERS = 210_000;
+const PBKDF2_ITERS = 100_000;
 const PBKDF2_KEYLEN = 32;
 
 async function pbkdf2(password, salt, iterations = PBKDF2_ITERS) {

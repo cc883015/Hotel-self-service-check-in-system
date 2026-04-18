@@ -26,7 +26,8 @@ Open <http://127.0.0.1:5173/>. Vite proxies `/api/*` to the Worker on :8787,
 so cookies and CORS work as if it were one origin.
 
 Local dev secrets live in `worker/.dev.vars` (created automatically; do not commit).
-For **production**, set `JWT_SECRET` with `npx wrangler secret put JWT_SECRET` (see [DEPLOY.md](./DEPLOY.md)).
+For **production**, set `JWT_SECRET` with `npx wrangler secret put JWT_SECRET` (see [DEPLOY.md](./DEPLOY.md)).  
+If you **rename** the Worker in `wrangler.toml`, run `secret put` again for that name — secrets do not copy automatically.
 
 **Production (single URL):** from `worker/`, run `npm run deploy` — it builds the frontend and deploys one Worker that serves both the React app and `/api/*` on your `*.workers.dev` hostname.
 
@@ -81,5 +82,5 @@ See [DEPLOY.md](./DEPLOY.md).
 - **Frontend**: React 18 + Vite + Tailwind CSS + React Router
 - **Backend**: Cloudflare Workers + Hono
 - **DB**: Cloudflare D1 (SQLite)
-- **Auth**: HS256 JWT in HttpOnly cookies, PBKDF2-SHA256 (210k iter) password hashing
+- **Auth**: HS256 JWT in HttpOnly cookies, PBKDF2-SHA256 (100k iter; Workers Web Crypto limit) password hashing
 - **Zero npm runtime deps beyond Hono** — no bcrypt, no jsonwebtoken.

@@ -29,8 +29,14 @@ export default function LoginPage() {
       if (err.status === 429) {
         const sec = err.body?.retry_after || 900;
         setError(`Too many failed attempts. Try again in ${Math.ceil(sec / 60)} minute(s).`);
+      } else if (err.status === 503 || err.body?.error === "server_misconfigured") {
+        setError(
+          "Server missing JWT secret. On your PC run: cd worker && npx wrangler secret put JWT_SECRET — then deploy again."
+        );
+      } else if (err.status >= 500) {
+        setError(`Server error (${err.status}). Check Cloudflare Worker logs or JWT / database bindings.`);
       } else {
-        setError("Incorrect username or password.");
+        setError("Incorrect username or password. Default username is cliffinnadmin (cliff + inn + admin).");
       }
     } finally {
       setLoading(false);
@@ -79,6 +85,8 @@ export default function LoginPage() {
                 autoComplete="username"
                 autoCapitalize="off"
                 spellCheck="false"
+                placeholder="cliffinnadmin"
+                title="Default: cliffinnadmin (cliff + inn + admin)"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="input"
