@@ -10,15 +10,31 @@ This guide takes a clean laptop and a Cloudflare account to a live, QR-ready sys
 
 ---
 
-## Frontend: GitHub + Cloudflare Pages (no extra tooling)
+## Recommended: one Worker = UI + API (`*.workers.dev`)
+
+The Worker bundles the Vite build (`frontend/dist`) and serves `/api/*` from the same origin. No `_redirects` proxy is used.
+
+```bash
+cd worker
+npm install
+npx wrangler secret put JWT_SECRET   # once per Worker name
+npm run deploy                       # builds frontend + uploads Worker + assets
+```
+
+Open `https://<worker-name>.<subdomain>.workers.dev/` — guest page, `/login`, and `/api/*` all work on **one hostname**. Set `worker/wrangler.toml` → `name` and `[vars] CORS_ORIGIN` to that exact `https://…` URL (no trailing slash).
+
+---
+
+## Alternative: GitHub + Cloudflare Pages (frontend only)
+
+Use this if you want `*.pages.dev` for the UI and a **separate** Worker URL for the API.
 
 1. Push this repo to GitHub (`main` branch).
-2. Cloudflare → **Workers & Pages** → **Pages** → **Create** → **Connect to Git** → choose the repo.
-3. Build settings: **Framework preset** None; **Build command** `cd frontend && npm install && npm run build`; **Build output directory** `frontend/dist`; root directory **empty**.
+2. Cloudflare → **Pages** → **Connect to Git** → your repo.
+3. Build: `cd frontend && npm install && npm run build`; output `frontend/dist`; root **empty**.
+4. Copy `frontend/_redirects.pages.example` to `frontend/public/_redirects`, set your Worker `/api/*` URL, commit, rebuild.
 
-Every push to `main` rebuilds the site. No GitHub Actions required.
-
-The **Worker** (API) is deployed separately with `wrangler` (Part 1). When you only change frontend code, Pages handles it. When you change `worker/`, run `cd worker && npm run deploy` from your machine.
+The **Worker** is still deployed with `cd worker && npm run deploy` (see Part 1). Match `CORS_ORIGIN` to your **Pages** URL.
 
 ---
 
@@ -87,28 +103,30 @@ npx wrangler secret put JWT_SECRET
 npm run deploy
 ```
 
-Wrangler prints a URL like `https://cliff-inn-worker.<your-subdomain>.workers.dev`. **Keep this URL** — you'll need it in Part 2.
+Wrangler prints your Worker URL (see `name` in `worker/wrangler.toml`). **Keep this URL**.
 
 Test it:
 ```bash
-curl https://cliff-inn-worker.<your-subdomain>.workers.dev/api/health
+curl https://<your-worker-name>.<subdomain>.workers.dev/api/health
 # → {"ok":true,"time":...}
 ```
 
 ---
 
-## Part 2 — Deploy the frontend (Pages)
+## Part 2 — Deploy the frontend (Pages only)
+
+Skip this section if you use **one Worker for UI + API** (see the **Recommended** block at the top).
 
 ### 2.1 Point the frontend at your Worker
 
-Open `frontend/public/_redirects` and replace `YOUR-SUBDOMAIN` with the subdomain from step 1.6:
+Copy `frontend/_redirects.pages.example` to `frontend/public/_redirects` and set the Worker URL:
 
 ```
-/api/*  https://cliff-inn-worker.my-actual-subdomain.workers.dev/api/:splat  200
-/*      /index.html                                                           200
+/api/*  https://<your-worker>.<subdomain>.workers.dev/api/:splat  200
+/*      /index.html                                                     200
 ```
 
-This makes `/api/*` requests on your Pages domain transparently hit the Worker — cookies work as same-origin, no CORS headaches.
+This proxies `/api/*` on your Pages domain to the Worker.
 
 ### 2.2 Build
 

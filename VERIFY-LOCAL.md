@@ -117,7 +117,7 @@ npm run build
 npm run preview
 ```
 
-Preview runs at <http://localhost:4173/> with the production bundle. Note: API won't work here unless you edit `_redirects` to point at your deployed Worker (or run the worker locally AND edit the build target).
+Preview runs at <http://localhost:4173/> with the production bundle. API calls go to the same origin only if you use a dev proxy; for local full-stack, use `npm run dev` in `frontend` + `worker` as in README.
 
 This step is mostly to confirm the build succeeds — the real verification is after `wrangler pages deploy`.
 

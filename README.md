@@ -28,6 +28,8 @@ so cookies and CORS work as if it were one origin.
 Local dev secrets live in `worker/.dev.vars` (created automatically; do not commit).
 For **production**, set `JWT_SECRET` with `npx wrangler secret put JWT_SECRET` (see [DEPLOY.md](./DEPLOY.md)).
 
+**Production (single URL):** from `worker/`, run `npm run deploy` — it builds the frontend and deploys one Worker that serves both the React app and `/api/*` on your `*.workers.dev` hostname.
+
 ## Default credentials
 
 | Field               | Value            |

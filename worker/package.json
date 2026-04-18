@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/ensure-dev-vars.mjs && wrangler dev",
-    "deploy": "wrangler deploy",
+    "build:frontend": "npm --prefix ../frontend ci && npm --prefix ../frontend run build",
+    "deploy": "npm run build:frontend && wrangler deploy",
+    "deploy:worker": "wrangler deploy",
     "db:init": "wrangler d1 execute cliff_inn --local --file=./schema.sql",
     "db:init-remote": "wrangler d1 execute cliff_inn --remote --file=./schema.sql"
   },
@@ -13,6 +15,6 @@
     "hono": "^4.6.0"
   },
   "devDependencies": {
-    "wrangler": "^3.80.0"
+    "wrangler": "^4.20.0"
   }
 }

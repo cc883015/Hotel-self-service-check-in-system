@@ -1,0 +1,6 @@
+# Use this ONLY if you deploy the frontend on Cloudflare Pages and the API on a *separate* Worker.
+# Copy to `frontend/public/_redirects`, set YOUR Worker URL, then build.
+# If you use one Worker for UI + API (`cd worker && npm run deploy`), do NOT add `_redirects` — see DEPLOY.md.
+
+/api/*  https://YOUR-WORKER-SUBDOMAIN.workers.dev/api/:splat  200
+/*     /index.html  200
