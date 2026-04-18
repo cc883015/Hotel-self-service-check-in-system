@@ -21,7 +21,7 @@ function jwtNotConfigured(c) {
   return c.json({
     error: "server_misconfigured",
     message:
-      "JWT_SECRET is missing or shorter than 32 characters. " +
+      "JWT_SECRET is missing or shorter than 16 characters. " +
       "Local: run `npm run dev` in the worker directory (it writes .dev.vars). " +
       "Production: `npx wrangler secret put JWT_SECRET`",
   }, 503);

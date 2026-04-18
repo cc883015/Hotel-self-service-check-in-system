@@ -1,5 +1,5 @@
-/** Min length for HS256 key material (Web Crypto rejects empty / tiny keys). */
-const JWT_SECRET_MIN_LEN = 32;
+/** Min length (UTF-8 chars). Many users paste short strings; 16+ is enough for HS256 key material. */
+const JWT_SECRET_MIN_LEN = 16;
 
 /**
  * @param {{ JWT_SECRET?: string }} env
