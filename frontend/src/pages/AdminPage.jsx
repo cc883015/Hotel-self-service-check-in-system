@@ -90,6 +90,7 @@ function TabButton({ active, onClick, children }) {
 // Guests tab
 // ==================================================================
 function GuestsTab() {
+  const navigate = useNavigate();
   const [guests, setGuests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
@@ -100,28 +101,48 @@ function GuestsTab() {
       const r = await api.listGuests();
       setGuests(r.guests || []);
     } catch (e) {
+      if (e.status === 401) {
+        navigate("/login", { replace: true });
+        return;
+      }
       setErr("Failed to load guests.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [navigate]);
 
   useEffect(() => { load(); }, [load]);
 
   async function handleAdd(data) {
-    await api.addGuest(data);
-    await load();
+    try {
+      await api.addGuest(data);
+      await load();
+    } catch (e) {
+      if (e.status === 401) {
+        navigate("/login", { replace: true });
+        return;
+      }
+      throw e;
+    }
   }
 
   async function handleDelete(id) {
     if (!confirm("Delete this guest? This cannot be undone.")) return;
-    await api.deleteGuest(id);
-    await load();
+    try {
+      await api.deleteGuest(id);
+      await load();
+    } catch (e) {
+      if (e.status === 401) navigate("/login", { replace: true });
+    }
   }
 
   async function handleExport() {
     try {
       const res = await api.exportCSV();
+      if (res.status === 401) {
+        navigate("/login", { replace: true });
+        return;
+      }
       if (!res.ok) throw new Error("Export failed");
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -314,6 +335,7 @@ function SettingsTab() {
 }
 
 function DefaultSafeCodeCard() {
+  const navigate = useNavigate();
   const [value, setValue] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -323,8 +345,11 @@ function DefaultSafeCodeCard() {
   useEffect(() => {
     api.getSettings()
       .then((s) => { setValue(s.default_safe_code || ""); setLoaded(true); })
-      .catch(() => setErr("Failed to load settings."));
-  }, []);
+      .catch((e) => {
+        if (e.status === 401) navigate("/login", { replace: true });
+        else setErr("Failed to load settings.");
+      });
+  }, [navigate]);
 
   async function handleSave(e) {
     e.preventDefault();
@@ -335,6 +360,10 @@ function DefaultSafeCodeCard() {
       setMsg("Saved.");
       setTimeout(() => setMsg(""), 2500);
     } catch (e) {
+      if (e.status === 401) {
+        navigate("/login", { replace: true });
+        return;
+      }
       setErr(e.body?.error === "invalid_safe_code"
         ? "Must be 3–8 digits."
         : "Could not save.");
@@ -372,6 +401,7 @@ function DefaultSafeCodeCard() {
 }
 
 function ChangePasswordCard() {
+  const navigate = useNavigate();
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -393,6 +423,10 @@ function ChangePasswordCard() {
       setCurrent(""); setNext(""); setConfirm("");
       setTimeout(() => setMsg(""), 3000);
     } catch (e) {
+      if (e.status === 401 && e.body?.error !== "wrong_current_password") {
+        navigate("/login", { replace: true });
+        return;
+      }
       if (e.body?.error === "wrong_current_password") setErr("Current password is incorrect.");
       else if (e.body?.error === "password_too_short") setErr("New password must be at least 8 characters.");
       else setErr("Could not change password.");

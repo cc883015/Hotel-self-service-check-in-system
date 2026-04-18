@@ -117,12 +117,13 @@ export function buildAuthCookie(token, maxAgeSec = 60 * 60 * 12) {
     `cliff_auth=${encodeURIComponent(token)}`,
     "HttpOnly",
     "Secure",
-    "SameSite=Strict",
+    // Lax: cookie is sent on same-site navigations and top-level GET from external links; Strict can drop session on some flows.
+    "SameSite=Lax",
     "Path=/",
     `Max-Age=${maxAgeSec}`,
   ].join("; ");
 }
 
 export function clearAuthCookie() {
-  return "cliff_auth=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0";
+  return "cliff_auth=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0";
 }
