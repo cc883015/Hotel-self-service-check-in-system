@@ -1,5 +1,5 @@
 # Proxy /api/* to the Worker. Edit the target below after deploying the Worker.
-/api/*  https://cliff-inn-worker.YOUR-SUBDOMAIN.workers.dev/api/:splat  200
+/api/*  https://cliff-inn-worker.n12047805.workers.dev/api/:splat  200
 
 # SPA fallback — React Router handles client-side routing.
 /*      /index.html                                                     200
