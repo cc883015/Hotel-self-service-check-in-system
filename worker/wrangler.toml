@@ -1,0 +1,24 @@
+name = "cliff-inn-worker"
+main = "src/index.js"
+compatibility_date = "2025-01-15"
+
+# D1 database binding.
+#
+# First time:  wrangler d1 create cliff_inn
+# Then paste the returned "database_id" below, replacing the placeholder.
+[[d1_databases]]
+binding = "DB"
+database_name = "cliff_inn"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+
+# Daily cron at 04:00 UTC ≈ 14:00 Brisbane — deletes records older than 2 days.
+[triggers]
+crons = ["0 4 * * *"]
+
+[vars]
+# In production, set this to your Pages URL (e.g. "https://cliff-inn.pages.dev").
+# For local dev, leave it — Vite's proxy handles same-origin cookies.
+CORS_ORIGIN = "http://127.0.0.1:5173"
+
+# JWT_SECRET: local `npm run dev` auto-writes worker/.dev.vars (gitignored).
+# Production:  wrangler secret put JWT_SECRET
