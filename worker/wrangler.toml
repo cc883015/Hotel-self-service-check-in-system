@@ -16,9 +16,9 @@ database_id = "21ab9eb0-aa20-4eb0-a259-73c8c0df235a"
 crons = ["0 4 * * *"]
 
 [vars]
-# In production, set this to your Pages URL (e.g. "https://cliff-inn.pages.dev").
-# For local dev, leave it — Vite's proxy handles same-origin cookies.
-CORS_ORIGIN = "http://127.0.0.1:5173"
+# Must match your Cloudflare Pages URL exactly (https, no trailing slash).
+# Local `npm run dev` overrides via worker/.dev.vars (see scripts/ensure-dev-vars.mjs).
+CORS_ORIGIN = "https://hotel-self-service-check-in-system.pages.dev"
 
 # JWT_SECRET: local `npm run dev` auto-writes worker/.dev.vars (gitignored).
 # Production:  wrangler secret put JWT_SECRET

@@ -1,6 +1,6 @@
 /**
- * Ensures worker/.dev.vars contains a usable JWT_SECRET for local `wrangler dev`.
- * Does not overwrite an existing secret of length >= 32.
+ * Ensures worker/.dev.vars has JWT_SECRET and local CORS override for `wrangler dev`.
+ * Production CORS lives in wrangler.toml; .dev.vars overrides vars locally.
  */
 import fs from "fs";
 import path from "path";
@@ -11,6 +11,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const workerRoot = path.join(__dirname, "..");
 const devVarsPath = path.join(workerRoot, ".dev.vars");
 const MIN_LEN = 32;
+const LOCAL_CORS = "CORS_ORIGIN=http://127.0.0.1:5173";
 
 let content = "";
 try {
@@ -31,17 +32,34 @@ for (let i = 0; i < lines.length; i++) {
   }
 }
 
-if (jwtVal.length >= MIN_LEN) {
-  process.exit(0);
+let changed = false;
+
+if (jwtVal.length < MIN_LEN) {
+  const secret = randomBytes(32).toString("hex");
+  if (jwtIdx >= 0) {
+    lines[jwtIdx] = `JWT_SECRET=${secret}`;
+  } else {
+    if (content.length && !content.endsWith("\n")) lines.push("");
+    lines.push(`JWT_SECRET=${secret}`);
+  }
+  changed = true;
+  console.log("[cliff-inn] Wrote JWT_SECRET to worker/.dev.vars (local dev only).");
 }
 
-const secret = randomBytes(32).toString("hex");
-if (jwtIdx >= 0) {
-  lines[jwtIdx] = `JWT_SECRET=${secret}`;
-} else {
-  if (content.length && !content.endsWith("\n")) lines.push("");
-  lines.push(`JWT_SECRET=${secret}`);
+let hasCors = false;
+for (const line of lines) {
+  if (line.startsWith("CORS_ORIGIN=")) {
+    hasCors = true;
+    break;
+  }
+}
+if (!hasCors) {
+  if (lines.length && lines[lines.length - 1] !== "") lines.push("");
+  lines.push(LOCAL_CORS);
+  changed = true;
+  console.log("[cliff-inn] Added CORS_ORIGIN to worker/.dev.vars (local Vite; overrides wrangler.toml).");
 }
 
-fs.writeFileSync(devVarsPath, lines.join("\n") + "\n", "utf8");
-console.log("[cliff-inn] Wrote JWT_SECRET to worker/.dev.vars (local dev only).");
+if (changed) {
+  fs.writeFileSync(devVarsPath, lines.join("\n") + "\n", "utf8");
+}
