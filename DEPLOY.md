@@ -10,6 +10,29 @@ This guide takes a clean laptop and a Cloudflare account to a live, QR-ready sys
 
 ---
 
+## GitHub — automatic deploys (VS Code → `git push`)
+
+| Piece | What to do |
+|-------|------------|
+| **Frontend (Pages)** | Cloudflare **Workers & Pages** → **Pages** → **Connect to Git** → each push to `main` runs your build (see Part 2). **No extra workflow file needed** for the React app. |
+| **Backend (Worker)** | This repo includes **`.github/workflows/deploy-worker.yml`**: on push to `main` when `worker/` (or the workflow) changes, GitHub Actions runs `wrangler deploy`. |
+
+### One-time setup: GitHub repository secrets
+
+In GitHub: **Settings → Secrets and variables → Actions → New repository secret**, add:
+
+1. **`CLOUDFLARE_API_TOKEN`**  
+   Cloudflare dashboard → profile → **My Profile** → **API Tokens** → **Create Token**.  
+   Use template **Edit Cloudflare Workers**, or custom with at least **Account → Workers Scripts → Edit** for your account. Paste the token as the secret value.
+
+2. **`CLOUDFLARE_ACCOUNT_ID`**  
+   Cloudflare **Workers & Pages** → right column **Account ID**, or locally: `cd worker && npx wrangler whoami` (after `wrangler login`).
+
+Then push to `main`, or open **Actions** and **Run workflow** on **Deploy Worker**.  
+`JWT_SECRET` and D1 stay in Cloudflare; CI only uploads Worker code from the repo.
+
+---
+
 ## Part 1 — Deploy the Worker (backend)
 
 ### 1.1 Install deps
