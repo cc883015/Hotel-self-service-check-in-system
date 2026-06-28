@@ -9,7 +9,11 @@
     "deploy": "npm run build:frontend && wrangler deploy",
     "deploy:worker": "wrangler deploy",
     "db:init": "wrangler d1 execute cliff_inn --local --file=./schema.sql",
-    "db:init-remote": "wrangler d1 execute cliff_inn --remote --file=./schema.sql"
+    "db:init-remote": "wrangler d1 execute cliff_inn --remote --file=./schema.sql",
+    "db:migrate-support": "wrangler d1 execute cliff_inn --local --file=./migrations/0001_support.sql",
+    "db:migrate-support-remote": "wrangler d1 execute cliff_inn --remote --file=./migrations/0001_support.sql",
+    "db:seed-support": "wrangler d1 execute cliff_inn --local --file=./seed-support.sql",
+    "db:seed-support-remote": "wrangler d1 execute cliff_inn --remote --file=./seed-support.sql"
   },
   "dependencies": {
     "hono": "^4.6.0"

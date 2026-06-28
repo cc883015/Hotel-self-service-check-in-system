@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { api } from "../lib/api.js";
 
 export default function GuestPage() {
@@ -32,27 +31,7 @@ export default function GuestPage() {
   }
 
   return (
-    <div className="relative z-10 min-h-screen flex flex-col safe-top safe-bottom">
-      <header className="flex items-center justify-between px-5 py-4 md:px-10 md:py-5">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full border border-amber-400/50 flex items-center justify-center">
-            <span className="font-display text-amber-400 text-lg leading-none">C</span>
-          </div>
-          <div className="leading-tight">
-            <div className="font-display text-amber-100 text-base md:text-lg">Cliff Inn</div>
-            <div className="text-[10px] md:text-[11px] uppercase tracking-[0.2em] text-ink-600">
-              Cliff House Motel
-            </div>
-          </div>
-        </div>
-        <Link
-          to="/login"
-          className="text-xs uppercase tracking-[0.15em] text-ink-600 hover:text-amber-300 transition"
-        >
-          Staff
-        </Link>
-      </header>
-
+    <>
       <main className="flex-1 flex items-center justify-center px-5 py-6 md:px-6 md:py-8">
         <div className="w-full max-w-lg">
           {!result ? (
@@ -117,7 +96,7 @@ export default function GuestPage() {
       <footer className="px-5 py-4 text-center text-[10px] md:text-[11px] uppercase tracking-[0.2em] text-ink-700">
         532 Main Street · Kangaroo Point
       </footer>
-    </div>
+    </>
   );
 }
 

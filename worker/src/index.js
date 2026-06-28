@@ -9,6 +9,7 @@ import {
   parseCookies, buildAuthCookie, clearAuthCookie,
 } from "./auth.js";
 import { getJwtSecret } from "./config.js";
+import supportRoutes from "./support/routes.js";
 
 const app = new Hono();
 
@@ -31,8 +32,17 @@ function jwtNotConfigured(c) {
 const RETENTION_SECONDS = 2 * 24 * 3600;
 
 // ---------- CORS ----------
+function getAllowedOrigins(env) {
+  const raw = env.ALLOWED_ORIGINS || env.CORS_ORIGIN || "";
+  return raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 app.use("/api/*", (c, next) => {
-  const origin = c.env.CORS_ORIGIN || "*";
+  const allowed = getAllowedOrigins(c.env);
+  const origin = allowed.length === 1 ? allowed[0] : allowed.length > 1 ? allowed : "*";
   return cors({
     origin,
     credentials: true,
@@ -343,6 +353,9 @@ app.put("/api/admin/password", requireAuth, async (c) => {
 
 // Health check.
 app.get("/api/health", (c) => c.json({ ok: true, time: now() }));
+
+// Customer Service AI ( /api/support/* )
+app.route("/api/support", supportRoutes);
 
 // ==================================================================
 // Cron: delete anything older than 2 days (runs daily)
