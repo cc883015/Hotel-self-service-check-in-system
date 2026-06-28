@@ -1,40 +1,55 @@
 /** Workers AI provider — default fallback, no external API key. */
 
+const MODELS = [
+  "@cf/meta/llama-3.1-8b-instruct",
+  "@cf/meta/llama-3.1-8b-instruct-fp8",
+];
+
 /**
  * @param {import('@cloudflare/workers-types').Ai} ai
- * @param {string} model
- * @param {{ system: string, messages: { role: string, content: string }[], signal: AbortSignal }} args
+ * @param {{ system: string, messages: { role: string, content: string }[] }} args
  */
-export async function workersAIGenerate(ai, model, { system, messages, signal }) {
+export async function workersAIGenerate(ai, { system, messages }) {
   const allMessages = [{ role: "system", content: system }, ...messages];
+  const inputs = {
+    messages: allMessages,
+    max_tokens: 512,
+    temperature: 0.4,
+  };
 
-  try {
-    const stream = await ai.run(model, { messages: allMessages, stream: true }, { signal });
-    if (stream instanceof ReadableStream) {
-      return { kind: "stream", stream };
+  for (const model of MODELS) {
+    try {
+      const result = await ai.run(model, inputs);
+      const text = extractWorkersAIText(result);
+      if (text?.trim()) {
+        return { kind: "text", text: text.trim(), model };
+      }
+    } catch (err) {
+      console.error(`[llm workers-ai sync ${model}]`, err?.message || err);
     }
-  } catch (err) {
-    console.error("[llm workers-ai stream failed]", err);
+
+    try {
+      const stream = await ai.run(model, { ...inputs, stream: true });
+      if (stream instanceof ReadableStream) {
+        return { kind: "stream", stream, model };
+      }
+    } catch (err) {
+      console.error(`[llm workers-ai stream ${model}]`, err?.message || err);
+    }
   }
 
-  try {
-    const result = await ai.run(model, { messages: allMessages }, { signal });
-    const text = extractWorkersAIText(result);
-    return { kind: "text", text };
-  } catch (err) {
-    console.error("[llm workers-ai failed]", err);
-    throw err;
-  }
+  throw new Error("workers-ai unavailable");
 }
 
 function extractWorkersAIText(result) {
   if (typeof result === "string") return result;
   if (result && typeof result.response === "string") return result.response;
   if (result && typeof result.text === "string") return result.text;
-  return JSON.stringify(result ?? "");
+  if (result?.result && typeof result.result.response === "string") return result.result.response;
+  return "";
 }
 
-/** Normalize Workers AI stream chunks to plain text tokens. */
+/** Normalize Workers AI SSE stream chunks to plain text tokens. */
 export function workersAIStreamToTextStream(source) {
   const decoder = new TextDecoder();
   const reader = source.getReader();
@@ -45,15 +60,13 @@ export function workersAIStreamToTextStream(source) {
       while (true) {
         const { done, value } = await reader.read();
         if (done) {
-          if (buffer) {
-            const t = parseChunk(buffer);
-            if (t) controller.enqueue(t);
-          }
+          flushBuffer(buffer, controller);
+          buffer = "";
           controller.close();
           return;
         }
         buffer += decoder.decode(value, { stream: true });
-        const parts = buffer.split("\n");
+        const parts = buffer.split(/\r?\n/);
         buffer = parts.pop() || "";
         for (const part of parts) {
           const t = parseChunk(part);
@@ -64,8 +77,17 @@ export function workersAIStreamToTextStream(source) {
   });
 }
 
+function flushBuffer(buffer, controller) {
+  for (const part of buffer.split(/\r?\n/)) {
+    const t = parseChunk(part);
+    if (t) controller.enqueue(t);
+  }
+}
+
 function parseChunk(raw) {
-  const line = raw.trim();
+  let line = raw.trim();
+  if (!line || line === "[DONE]" || line === "data: [DONE]") return "";
+  if (line.startsWith("data:")) line = line.slice(5).trim();
   if (!line) return "";
   try {
     const json = JSON.parse(line);
@@ -74,5 +96,6 @@ function parseChunk(raw) {
   } catch {
     /* plain text chunk */
   }
+  if (line.startsWith("{")) return "";
   return line;
 }

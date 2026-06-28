@@ -23,7 +23,7 @@ export default function AdminPage() {
 
   if (!authChecked) {
     return (
-      <div className="relative z-10 min-h-screen flex items-center justify-center text-ink-500 text-sm">
+      <div className="relative z-10 min-h-screen flex items-center justify-center text-stone-500 text-sm">
         Loading…
       </div>
     );
@@ -31,22 +31,22 @@ export default function AdminPage() {
 
   return (
     <div className="relative z-10 min-h-screen flex flex-col safe-top safe-bottom">
-      <header className="border-b border-ink-800/80 px-5 py-4 md:px-10 md:py-5">
+      <header className="glass-nav px-5 py-4 md:px-10 md:py-5">
         <div className="flex items-center justify-between max-w-5xl mx-auto w-full">
           <Link to="/" className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full border border-amber-400/50 flex items-center justify-center">
-              <span className="font-display text-amber-400 text-lg leading-none">C</span>
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400/90 to-amber-600 flex items-center justify-center border border-white/80 shadow-sm">
+              <span className="font-display text-white text-lg leading-none">C</span>
             </div>
             <div className="leading-tight">
-              <div className="font-display text-amber-100 text-base md:text-lg">Cliff Inn</div>
-              <div className="text-[10px] md:text-[11px] uppercase tracking-[0.2em] text-ink-600">
+              <div className="font-display text-stone-800 text-base md:text-lg">Cliff Inn</div>
+              <div className="text-[10px] md:text-[11px] uppercase tracking-[0.2em] text-stone-400">
                 Admin console
               </div>
             </div>
           </Link>
           <button
             onClick={handleLogout}
-            className="text-xs uppercase tracking-[0.15em] text-ink-500 hover:text-amber-300 transition"
+            className="text-xs uppercase tracking-[0.15em] text-stone-500 hover:text-amber-700 transition"
           >
             Sign out
           </button>
@@ -54,7 +54,7 @@ export default function AdminPage() {
       </header>
 
       {/* Tab bar */}
-      <div className="border-b border-ink-800/80 px-5 md:px-10">
+      <div className="border-b border-white/60 bg-white/30 backdrop-blur-sm px-5 md:px-10">
         <div className="max-w-5xl mx-auto flex gap-1">
           <TabButton active={tab === "guests"}   onClick={() => setTab("guests")}>Guests</TabButton>
           <TabButton active={tab === "settings"} onClick={() => setTab("settings")}>Settings</TabButton>
@@ -77,8 +77,8 @@ function TabButton({ active, onClick, children }) {
       onClick={onClick}
       className={`px-4 py-3 text-sm tracking-wide transition border-b-2 -mb-px ${
         active
-          ? "border-amber-400 text-amber-200"
-          : "border-transparent text-ink-500 hover:text-amber-300"
+          ? "border-amber-500 text-amber-800 font-medium"
+          : "border-transparent text-stone-500 hover:text-amber-700"
       }`}
     >
       {children}
@@ -165,8 +165,8 @@ function GuestsTab() {
 
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="font-display text-2xl text-amber-100">Guests</h2>
-          <p className="text-xs text-ink-500 mt-1">
+          <h2 className="font-display text-2xl text-stone-800">Guests</h2>
+          <p className="text-xs text-stone-500 mt-1">
             Showing last 2 days · auto-deleted after 2 days
           </p>
         </div>
@@ -176,15 +176,15 @@ function GuestsTab() {
       </div>
 
       {err && (
-        <div className="text-sm text-red-300/90 bg-red-900/20 border border-red-800/40 rounded-lg px-4 py-3">
+        <div className="alert-error">
           {err}
         </div>
       )}
 
       {loading ? (
-        <div className="text-ink-500 text-sm py-8 text-center">Loading…</div>
+        <div className="text-stone-500 text-sm py-8 text-center">Loading…</div>
       ) : guests.length === 0 ? (
-        <div className="card p-8 text-center text-ink-500 text-sm">
+        <div className="card p-8 text-center text-stone-500 text-sm">
           No guests yet. Add one above.
         </div>
       ) : (
@@ -225,7 +225,7 @@ function AddGuestForm({ onAdd }) {
 
   return (
     <form onSubmit={handleSubmit} className="card p-5 md:p-6">
-      <div className="text-xs uppercase tracking-[0.2em] text-amber-400/80 mb-4">
+      <div className="text-label mb-4">
         Add guest
       </div>
       <div className="grid md:grid-cols-[1.4fr_0.7fr_0.7fr_auto] gap-3">
@@ -260,9 +260,9 @@ function AddGuestForm({ onAdd }) {
         </button>
       </div>
       {err && (
-        <div className="mt-3 text-sm text-red-300/90">{err}</div>
+        <div className="mt-3 text-sm text-red-700">{err}</div>
       )}
-      <div className="mt-3 text-xs text-ink-500">
+      <div className="mt-3 text-xs text-stone-500">
         Leave safe code empty to use the default from Settings.
       </div>
     </form>
@@ -283,24 +283,24 @@ function GuestRow({ guest, onDelete }) {
     <div className="card p-4 md:p-5 flex flex-col md:flex-row md:items-center gap-3 md:gap-5">
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-3 flex-wrap">
-          <div className="font-display text-lg text-amber-50 truncate">{guest.name}</div>
-          <div className="text-xs text-ink-500 uppercase tracking-wider">
-            Room <span className="text-amber-300 font-mono">{guest.room_number}</span>
+          <div className="font-display text-lg text-stone-900 truncate">{guest.name}</div>
+          <div className="text-xs text-stone-500 uppercase tracking-wider">
+            Room <span className="text-amber-700 font-mono">{guest.room_number}</span>
           </div>
           {guest.safe_code && (
-            <div className="text-xs text-ink-500 uppercase tracking-wider">
-              Safe <span className="text-amber-300 font-mono">{guest.safe_code}</span>
+            <div className="text-xs text-stone-500 uppercase tracking-wider">
+              Safe <span className="text-amber-700 font-mono">{guest.safe_code}</span>
             </div>
           )}
         </div>
-        <div className="mt-1.5 text-xs text-ink-500">
+        <div className="mt-1.5 text-xs text-stone-500">
           Added {relativeTime(guest.created_at)}
         </div>
       </div>
 
       <div className="flex items-center gap-3 md:gap-4">
-        <div className={`text-xs flex items-center gap-2 ${scanned ? "text-amber-300" : "text-ink-500"}`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${scanned ? "bg-amber-400" : "bg-ink-600"}`} />
+        <div className={`text-xs flex items-center gap-2 ${scanned ? "text-amber-700" : "text-stone-500"}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${scanned ? "bg-amber-500" : "bg-stone-300"}`} />
           {scanned
             ? <>Scanned {guest.scan_count}× · last {relativeTime(guest.last_scan_at)}</>
             : <>Not scanned yet</>}
@@ -374,10 +374,10 @@ function DefaultSafeCodeCard() {
 
   return (
     <form onSubmit={handleSave} className="card p-5 md:p-6">
-      <div className="text-xs uppercase tracking-[0.2em] text-amber-400/80 mb-2">
+      <div className="text-label mb-2">
         Default safe code
       </div>
-      <p className="text-xs text-ink-500 mb-4">
+      <p className="text-xs text-stone-500 mb-4">
         Used when you add a guest without a custom safe code.
       </p>
       <div className="flex gap-3">
@@ -394,8 +394,8 @@ function DefaultSafeCodeCard() {
           {saving ? "Saving…" : "Save"}
         </button>
       </div>
-      {msg && <div className="mt-3 text-sm text-amber-300">{msg}</div>}
-      {err && <div className="mt-3 text-sm text-red-300/90">{err}</div>}
+      {msg && <div className="mt-3 text-sm text-amber-700">{msg}</div>}
+      {err && <div className="mt-3 text-sm text-red-700">{err}</div>}
     </form>
   );
 }
@@ -438,10 +438,10 @@ function ChangePasswordCard() {
   return (
     <form onSubmit={handleSubmit} className="card p-5 md:p-6 space-y-4">
       <div>
-        <div className="text-xs uppercase tracking-[0.2em] text-amber-400/80 mb-2">
+        <div className="text-label mb-2">
           Change admin password
         </div>
-        <p className="text-xs text-ink-500">
+        <p className="text-xs text-stone-500">
           At least 8 characters. Sign in again after changing.
         </p>
       </div>
@@ -474,8 +474,8 @@ function ChangePasswordCard() {
         required
       />
 
-      {msg && <div className="text-sm text-amber-300">{msg}</div>}
-      {err && <div className="text-sm text-red-300/90">{err}</div>}
+      {msg && <div className="text-sm text-amber-700">{msg}</div>}
+      {err && <div className="text-sm text-red-700">{err}</div>}
 
       <button type="submit" disabled={saving || !current || !next} className="btn-primary">
         {saving ? "Updating…" : "Update password"}
