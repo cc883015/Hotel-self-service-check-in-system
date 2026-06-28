@@ -1,5 +1,6 @@
 import { NavLink, Outlet, Link } from "react-router-dom";
 import { t } from "../../lib/i18n.js";
+import CliffInnLogo from "../icons/CliffInnLogo.jsx";
 
 export default function GuestLayout() {
   const navClass = ({ isActive }) =>
@@ -13,9 +14,7 @@ export default function GuestLayout() {
           aria-label="Site header"
         >
           <div className="flex items-center gap-2.5 shrink-0 min-w-0">
-            <div className="w-11 h-11 md:w-12 md:h-12 flex-shrink-0 rounded-full bg-gradient-to-br from-amber-400/90 to-amber-600 flex items-center justify-center shadow-[0_4px_12px_rgba(217,119,6,0.25)] border border-white/80">
-              <span className="font-display text-white text-xl leading-none font-semibold">C</span>
-            </div>
+            <CliffInnLogo />
             <div className="leading-tight min-w-0">
               <div className="font-display text-base sm:text-lg md:text-xl font-bold text-stone-800 truncate max-w-[88px] sm:max-w-none">
                 Cliff Inn
