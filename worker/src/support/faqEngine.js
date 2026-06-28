@@ -8,17 +8,17 @@ const INTENT_CATEGORIES = {
 
 /** @type {Record<string, string[]>} */
 const SYNONYMS = {
-  wifi_ssid: ["wifi", "wi-fi", "wireless", "ssid", "network", "internet", "无线", "网络", "账号", "名称"],
-  wifi_password: ["wifi password", "wi-fi password", "passcode", "password", "密码", "无线密码", "连不上", "上不了网"],
-  parking: ["parking", "park", "car", "vehicle", "车位", "停车", "停哪"],
-  checkin_time: ["check in", "check-in", "checkin", "arrival", "入住", "几点入住", "什么时候入住"],
-  checkout_time: ["check out", "check-out", "checkout", "departure", "退房", "几点退房", "什么时候退房"],
-  extend_stay: ["extend", "extension", "stay longer", "late checkout", "延住", "续住", "多住"],
-  laundry: ["laundry", "laundromat", "wash", "dry", "洗衣", "洗衣店", "洗衣服"],
-  dining: ["food", "restaurant", "eat", "dining", "mcdonald", "kfc", "吃饭", "餐饮", "餐厅", "麦当劳"],
-  supermarket: ["supermarket", "grocery", "convenience", "7-eleven", "coles", "超市", "便利店", "买东西"],
-  damage_report: ["damage", "broken", "complaint", "urgent", "emergency", "fault", "损坏", "报修", "投诉", "紧急", "坏了"],
-  things_to_do: ["things to do", "sightseeing", "attraction", "tourism", "trip", "游玩", "景点", "旅游"],
+  wifi_ssid: ["wifi", "wi-fi", "wireless", "ssid", "network", "internet"],
+  wifi_password: ["wifi password", "wi-fi password", "passcode", "password", "cannot connect"],
+  parking: ["parking", "park", "car", "vehicle"],
+  checkin_time: ["check in", "check-in", "checkin", "arrival"],
+  checkout_time: ["check out", "check-out", "checkout", "departure"],
+  extend_stay: ["extend", "extension", "stay longer", "late checkout"],
+  laundry: ["laundry", "laundromat", "wash", "dry"],
+  dining: ["food", "restaurant", "eat", "dining", "mcdonald", "kfc", "nearby restaurant"],
+  supermarket: ["supermarket", "grocery", "convenience", "7-eleven", "coles"],
+  damage_report: ["damage", "broken", "complaint", "urgent", "emergency", "fault"],
+  things_to_do: ["things to do", "sightseeing", "attraction", "tourism", "trip"],
 };
 
 export function normalizeMessage(raw) {
@@ -27,6 +27,10 @@ export function normalizeMessage(raw) {
     .replace(/[^\p{L}\p{N}\s]/gu, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function minTermLen() {
+  return 3;
 }
 
 /**
@@ -55,7 +59,7 @@ export function matchFaqIntent(message, entries) {
     for (const term of terms) {
       if (!term) continue;
       if (norm === term) return intent;
-      if (norm.includes(term) && term.length >= 3) {
+      if (norm.includes(term) && term.length >= minTermLen()) {
         const score = term.length;
         if (score > bestScore) {
           bestScore = score;

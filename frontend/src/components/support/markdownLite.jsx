@@ -30,7 +30,7 @@ export function renderSimpleMarkdown(text) {
             href={pick.m[2]}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-amber-300 underline underline-offset-2 break-all"
+            className="text-amber-700 underline underline-offset-2 break-all hover:text-amber-800"
           >
             {pick.m[1]}
           </a>
@@ -38,7 +38,7 @@ export function renderSimpleMarkdown(text) {
         rest = rest.slice(idx + pick.m[0].length);
       } else {
         parts.push(
-          <strong key={key++} className="text-amber-100 font-medium">
+          <strong key={key++} className="text-stone-900 font-medium">
             {pick.m[1]}
           </strong>
         );

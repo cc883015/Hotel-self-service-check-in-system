@@ -1,17 +1,16 @@
 import { houseRules, t } from "../../lib/i18n.js";
 
-export default function HouseRulesPanel({ locale }) {
-  const rules = houseRules[locale] || houseRules.en;
+export default function HouseRulesPanel() {
   return (
-    <section className="card p-4 md:p-5 border-amber-800/30 mb-4" aria-labelledby="house-rules-title">
-      <h2 id="house-rules-title" className="text-xs uppercase tracking-[0.2em] text-amber-400/90 mb-3">
-        ⚠ {t(locale, "houseRulesTitle")}
+    <section className="glass p-4 md:p-5 border-amber-200/50" aria-labelledby="house-rules-title">
+      <h2 id="house-rules-title" className="text-label mb-3">
+        ⚠ {t("houseRulesTitle")}
       </h2>
-      <ul className="space-y-3 text-sm text-amber-100/85">
-        {rules.map((r) => (
+      <ul className="space-y-3 text-sm text-stone-600">
+        {houseRules.map((r) => (
           <li key={r.title}>
-            <div className="font-medium text-amber-200">{r.title}</div>
-            <div className="text-ink-500 mt-0.5">{r.body}</div>
+            <div className="font-medium text-stone-800">{r.title}</div>
+            <div className="text-stone-500 mt-0.5">{r.body}</div>
           </li>
         ))}
       </ul>

@@ -9,7 +9,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // If already logged in, bounce to /admin.
   useEffect(() => {
     let cancelled = false;
     api.me()
@@ -48,21 +47,21 @@ export default function LoginPage() {
 
   return (
     <div className="relative z-10 min-h-screen flex flex-col safe-top safe-bottom">
-      <header className="flex items-center justify-between px-5 py-4 md:px-10 md:py-5">
+      <header className="glass-nav flex items-center justify-between px-5 py-4 md:px-10 md:py-5">
         <Link to="/" className="flex items-center gap-3 group">
-          <div className="w-9 h-9 rounded-full border border-amber-400/50 flex items-center justify-center">
-            <span className="font-display text-amber-400 text-lg leading-none">C</span>
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400/90 to-amber-600 flex items-center justify-center border border-white/80 shadow-sm">
+            <span className="font-display text-white text-lg leading-none">C</span>
           </div>
           <div className="leading-tight">
-            <div className="font-display text-amber-100 text-base md:text-lg group-hover:text-amber-300 transition">
+            <div className="font-display text-stone-800 text-base md:text-lg group-hover:text-amber-700 transition">
               Cliff Inn
             </div>
-            <div className="text-[10px] md:text-[11px] uppercase tracking-[0.2em] text-ink-600">
+            <div className="text-[10px] md:text-[11px] uppercase tracking-[0.2em] text-stone-400">
               Staff area
             </div>
           </div>
         </Link>
-        <Link to="/" className="text-xs uppercase tracking-[0.15em] text-ink-600 hover:text-amber-300 transition">
+        <Link to="/" className="text-xs uppercase tracking-[0.15em] text-stone-500 hover:text-amber-700 transition">
           ← Back
         </Link>
       </header>
@@ -70,17 +69,17 @@ export default function LoginPage() {
       <main className="flex-1 flex items-center justify-center px-5 py-8">
         <div className="w-full max-w-sm animate-fade-up">
           <div className="text-center mb-8">
-            <div className="text-[10px] md:text-[11px] uppercase tracking-[0.3em] text-amber-400/80 mb-3">
+            <div className="text-label mb-3">
               Restricted access
             </div>
-            <h1 className="font-display text-3xl md:text-4xl text-amber-50 italic">
+            <h1 className="font-display text-3xl md:text-4xl text-stone-800 italic">
               Staff sign in
             </h1>
           </div>
 
-          <form onSubmit={handleSubmit} className="card p-6 md:p-8 shadow-2xl shadow-black/40 space-y-4">
+          <form onSubmit={handleSubmit} className="glass-strong p-6 md:p-8 space-y-4">
             <div>
-              <label className="block text-xs uppercase tracking-[0.2em] text-amber-400/80 mb-2">
+              <label className="block text-label mb-2">
                 Username
               </label>
               <input
@@ -99,7 +98,7 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-[0.2em] text-amber-400/80 mb-2">
+              <label className="block text-label mb-2">
                 Password
               </label>
               <input
@@ -114,7 +113,7 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <div className="text-sm text-red-300/90 bg-red-900/20 border border-red-800/40 rounded-lg px-4 py-3">
+              <div className="alert-error">
                 {error}
               </div>
             )}
@@ -128,7 +127,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 text-center text-[11px] uppercase tracking-[0.15em] text-ink-700">
+          <div className="mt-6 text-center text-[11px] uppercase tracking-[0.15em] text-stone-400">
             Authorised personnel only
           </div>
         </div>

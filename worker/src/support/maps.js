@@ -17,10 +17,10 @@ export function mapsSearchQueryUrl(query) {
 }
 
 /** @param {{ name: string, address: string, place_id: string, note?: string | null }[]} places */
-export function formatPlacesBlock(places, locale) {
+export function formatPlacesBlock(places) {
   if (!places?.length) return "";
-  const mapLabel = locale === "zh" ? "地图" : "Map";
-  const dirLabel = locale === "zh" ? "导航" : "Directions";
+  const mapLabel = "Map";
+  const dirLabel = "Directions";
   const lines = places.map((p) => {
     const note = p.note ? ` (${p.note})` : "";
     const search = mapsSearchUrl(p.name, p.address, p.place_id);

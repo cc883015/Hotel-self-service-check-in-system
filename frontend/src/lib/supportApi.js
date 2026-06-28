@@ -1,6 +1,7 @@
 const BASE = import.meta.env.VITE_API_BASE || "";
+const DEFAULT_LOCALE = "en";
 
-export async function fetchQuickQuestions(locale) {
+export async function fetchQuickQuestions(locale = DEFAULT_LOCALE) {
   const res = await fetch(`${BASE}/api/support/quick-questions?locale=${locale}`, {
     credentials: "include",
   });

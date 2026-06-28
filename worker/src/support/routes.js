@@ -16,10 +16,6 @@ const RATE_LIMIT = 30;
 const RATE_WINDOW = 60;
 const MAX_HISTORY = 8;
 
-function parseLocale(raw) {
-  return raw === "zh" ? "zh" : "en";
-}
-
 function maxInputChars(env) {
   const n = parseInt(String(env.MAX_INPUT_CHARS || "2000"), 10);
   return Number.isFinite(n) && n > 0 ? n : 2000;
@@ -54,10 +50,10 @@ async function maybeLog(env, row) {
   }
 }
 
-async function buildFaqResponse(env, intent, locale) {
-  const row = await getFaqByIntent(env.DB, intent, locale);
+async function buildFaqResponse(env, intent) {
+  const row = await getFaqByIntent(env.DB, intent);
   if (!row) return null;
-  const answer = await enrichFaqAnswer(env.DB, intent, row.answer, locale);
+  const answer = await enrichFaqAnswer(env.DB, intent, row.answer);
   return {
     source: "faq",
     intent,
@@ -67,36 +63,63 @@ async function buildFaqResponse(env, intent, locale) {
 }
 
 support.get("/quick-questions", async (c) => {
-  const locale = parseLocale(c.req.query("locale"));
-  const rows = await getQuickFaqs(c.env.DB, locale);
-  const enriched = await Promise.all(
-    rows.map(async (r) => ({
-      id: r.id,
-      intent: r.intent,
-      question: r.question,
-      answer: await enrichFaqAnswer(c.env.DB, r.intent, r.answer, locale),
-      sort_order: r.sort_order,
-      actions: faqActions(r.intent),
-    }))
-  );
-  return c.json({ questions: enriched });
+  try {
+    const rows = await getQuickFaqs(c.env.DB);
+    const enriched = await Promise.all(
+      rows.map(async (r) => {
+        let answer = r.answer;
+        try {
+          answer = await enrichFaqAnswer(c.env.DB, r.intent, r.answer);
+        } catch (err) {
+          console.error("[support enrich]", r.intent, err);
+        }
+        return {
+          id: r.id,
+          intent: r.intent,
+          question: r.question,
+          answer,
+          sort_order: r.sort_order,
+          actions: faqActions(r.intent),
+        };
+      })
+    );
+    return c.json({ questions: enriched });
+  } catch (err) {
+    console.error("[support/quick-questions]", err);
+    return c.json({ questions: [], error: "load_failed" });
+  }
 });
 
 support.get("/settings/contact", (c) => {
-  const locale = parseLocale(c.req.query("locale"));
   return c.json({
     contact_in_person: true,
-    message:
-      locale === "zh"
-        ? "请前往前台当面联系 reception。"
-        : "Please contact reception in person at the front desk.",
+    message: "Please contact reception in person at the front desk.",
   });
 });
 
 support.post("/chat", async (c) => {
-  const ip = getClientIP(c);
   const body = await c.req.json().catch(() => ({}));
-  const locale = parseLocale(body.locale);
+  const accept = c.req.header("Accept") || "";
+  const wantsStream = accept.includes("text/event-stream") || body.stream === true;
+
+  try {
+    return await handleSupportChat(c, body, wantsStream);
+  } catch (err) {
+    console.error("[support/chat]", err);
+    const text = fallbackMessage();
+    if (wantsStream) {
+      return sseTextResponse(text, { source: "fallback", provider: null });
+    }
+    return c.json({
+      source: "fallback",
+      answer: text,
+      actions: ["contact_front_desk"],
+    });
+  }
+});
+
+async function handleSupportChat(c, body, wantsStream) {
+  const ip = getClientIP(c);
   const maxLen = maxInputChars(c.env);
   const sessionId = sanitizeInput(body.sessionId || "anon", 64) || "anon";
   const message = sanitizeInput(body.message, maxLen);
@@ -108,10 +131,7 @@ support.post("/chat", async (c) => {
     return c.json(
       {
         error: "rate_limited",
-        message:
-          locale === "zh"
-            ? "请求过于频繁，请稍后再试。"
-            : "Too many requests. Please wait a moment.",
+        message: "Too many requests. Please wait a moment.",
         retry_after: rate.retryAfter,
       },
       429
@@ -119,7 +139,7 @@ support.post("/chat", async (c) => {
   }
 
   if (intentDirect) {
-    const faq = await buildFaqResponse(c.env, intentDirect, locale);
+    const faq = await buildFaqResponse(c.env, intentDirect);
     if (faq) {
       await maybeLog(c.env, {
         id: crypto.randomUUID(),
@@ -141,7 +161,7 @@ support.post("/chat", async (c) => {
   const keywordRows = await getAllFaqKeywords(c.env.DB);
   const matched = matchFaqIntent(message, keywordRows);
   if (matched) {
-    const faq = await buildFaqResponse(c.env, matched, locale);
+    const faq = await buildFaqResponse(c.env, matched);
     if (faq) {
       await maybeLog(c.env, {
         id: crypto.randomUUID(),
@@ -172,10 +192,7 @@ support.post("/chat", async (c) => {
     .slice(-MAX_HISTORY);
 
   const messages = [...history, { role: "user", content: message }];
-  const system = await buildSystemPrompt(c.env.DB, locale);
-
-  const accept = c.req.header("Accept") || "";
-  const wantsStream = accept.includes("text/event-stream") || body.stream === true;
+  const system = await buildSystemPrompt(c.env.DB);
 
   const controller = new AbortController();
   c.req.raw.signal?.addEventListener("abort", () => controller.abort());
@@ -187,7 +204,7 @@ support.post("/chat", async (c) => {
   });
 
   if (!llm) {
-    const text = fallbackMessage(locale);
+    const text = fallbackMessage();
     if (wantsStream) {
       return sseTextResponse(text, { source: "fallback", provider: null });
     }
@@ -242,9 +259,9 @@ support.post("/chat", async (c) => {
     return c.json({ source: "llm", answer: full, provider: llm.provider });
   }
 
-  const text = fallbackMessage(locale);
+  const text = fallbackMessage();
   return c.json({ source: "fallback", answer: text, actions: ["contact_front_desk"] });
-});
+}
 
 function sseTextResponse(text, meta) {
   const stream = new ReadableStream({
@@ -298,8 +315,7 @@ function sseFromStream(source, provider, sessionId, env) {
         );
       } catch (err) {
         console.error("[support sse]", err);
-        const locale = "en";
-        const fb = fallbackMessage(locale);
+        const fb = fallbackMessage();
         controller.enqueue(enc.encode(`event: token\ndata: ${JSON.stringify({ text: fb })}\n\n`));
         controller.enqueue(
           enc.encode(`event: done\ndata: ${JSON.stringify({ source: "fallback", provider: null })}\n\n`)

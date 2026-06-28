@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useOutletContext } from "react-router-dom";
-import { t } from "../lib/i18n.js";
+import { t, LOCALE } from "../lib/i18n.js";
 import { fetchQuickQuestions, chatStream } from "../lib/supportApi.js";
+import { QUICK_FAQ_FALLBACK } from "../lib/quickFaqFallback.js";
 import QuickQuestions from "../components/support/QuickQuestions.jsx";
 import MessageBubble from "../components/support/MessageBubble.jsx";
 import HouseRulesPanel from "../components/support/HouseRulesPanel.jsx";
@@ -23,9 +23,9 @@ function getSessionId() {
 }
 
 export default function SupportPage() {
-  const { locale } = useOutletContext();
   const [questions, setQuestions] = useState([]);
   const [loadingQ, setLoadingQ] = useState(true);
+  const [faqFromFallback, setFaqFromFallback] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
@@ -37,23 +37,25 @@ export default function SupportPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
+  const loadQuestions = useCallback(() => {
     setLoadingQ(true);
-    fetchQuickQuestions(locale)
+    setFaqFromFallback(false);
+    return fetchQuickQuestions(LOCALE)
       .then((data) => {
-        if (!cancelled) setQuestions(data.questions || []);
+        const qs = data.questions?.length ? data.questions : QUICK_FAQ_FALLBACK;
+        setQuestions(qs);
+        setFaqFromFallback(!data.questions?.length);
       })
       .catch(() => {
-        if (!cancelled) setQuestions([]);
+        setQuestions(QUICK_FAQ_FALLBACK);
+        setFaqFromFallback(true);
       })
-      .finally(() => {
-        if (!cancelled) setLoadingQ(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [locale]);
+      .finally(() => setLoadingQ(false));
+  }, []);
+
+  useEffect(() => {
+    loadQuestions();
+  }, [loadQuestions]);
 
   useEffect(() => {
     scrollBottom();
@@ -99,7 +101,7 @@ export default function SupportPage() {
     await chatStream({
       sessionId,
       message: text,
-      locale,
+      locale: LOCALE,
       history: historyForApi(false).slice(0, -1),
       signal: abortRef.current.signal,
       onFaq(data) {
@@ -138,7 +140,7 @@ export default function SupportPage() {
             if (last?.role === "assistant" && !last.content) {
               next[next.length - 1] = {
                 role: "assistant",
-                content: acc || t(locale, "aiUnavailable") + " " + t(locale, "tryQuick"),
+                content: acc || `${t("aiUnavailable")} ${t("tryQuick")}`,
                 actions: ["contact_front_desk"],
                 source: "fallback",
               };
@@ -151,13 +153,17 @@ export default function SupportPage() {
       },
       onError(msg) {
         setStreaming(false);
+        const friendly =
+          !msg || /^HTTP \d+/i.test(msg)
+            ? `${t("aiUnavailable")} ${t("tryQuick")}`
+            : msg;
         setMessages((prev) => {
           const next = [...prev];
           const last = next[next.length - 1];
           if (last?.role === "assistant") {
             next[next.length - 1] = {
               role: "assistant",
-              content: msg || t(locale, "rateLimited"),
+              content: friendly,
               actions: ["contact_front_desk"],
               source: "error",
             };
@@ -171,44 +177,20 @@ export default function SupportPage() {
   const showWelcome = messages.length === 0;
 
   return (
-    <main className="flex-1 flex flex-col px-4 md:px-8 py-4 max-w-2xl mx-auto w-full min-h-0">
-      <HouseRulesPanel locale={locale} />
-
-      <div className="flex-1 flex flex-col card p-4 md:p-5 min-h-[420px] shadow-2xl shadow-black/30">
-        {showWelcome && (
-          <p className="text-sm text-amber-100/85 mb-4 leading-relaxed">{renderWelcome(t(locale, "welcome"))}</p>
-        )}
-
-        <h2 className="text-[11px] uppercase tracking-[0.2em] text-amber-400/80 mb-2">
-          {t(locale, "commonQuestions")}
-        </h2>
-        <QuickQuestions
-          questions={questions}
-          loading={loadingQ}
-          locale={locale}
-          onSelect={handleQuickSelect}
-        />
-
-        <div
-          className="flex-1 overflow-y-auto min-h-[160px] max-h-[45vh] md:max-h-[50vh] pr-1 -mr-1"
-          aria-live="polite"
-          aria-label="Chat messages"
-        >
-          {messages.map((m, i) => (
-            <MessageBubble
-              key={i}
-              role={m.role}
-              content={m.content || (streaming && i === messages.length - 1 ? t(locale, "thinking") : "")}
-              actions={m.actions}
-              locale={locale}
-            />
-          ))}
-          <div ref={bottomRef} />
+    <main className="flex-1 flex flex-col px-4 md:px-8 py-4 max-w-2xl mx-auto w-full min-h-0 gap-4">
+      <section className="glass-input-bar sticky top-0 z-30 p-4 md:p-5 shrink-0">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-md">
+            <span className="text-white text-sm">✦</span>
+          </div>
+          <div>
+            <div className="font-display text-stone-800 text-base">{t("moduleName")}</div>
+            <div className="text-[10px] uppercase tracking-[0.15em] text-stone-500">Cliff Inn · AI Assistant</div>
+          </div>
         </div>
-
-        <form onSubmit={handleSend} className="mt-3 pt-3 border-t border-ink-800">
+        <form onSubmit={handleSend}>
           <label htmlFor="support-input" className="sr-only">
-            {t(locale, "placeholder")}
+            {t("placeholder")}
           </label>
           <div className="flex gap-2">
             <input
@@ -216,22 +198,64 @@ export default function SupportPage() {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={t(locale, "placeholder")}
-              className="input flex-1 text-base"
+              placeholder={t("placeholder")}
+              className="input flex-1 text-base shadow-sm"
               disabled={streaming}
               autoComplete="off"
               enterKeyHint="send"
             />
-            <button type="submit" disabled={streaming || !input.trim()} className="btn-primary px-5 min-w-[80px]">
-              {t(locale, "send")}
+            <button type="submit" disabled={streaming || !input.trim()} className="btn-primary px-5 min-w-[88px] shrink-0">
+              {t("send")}
             </button>
           </div>
-          <p className="mt-2 text-xs text-ink-600 text-center">{t(locale, "footerHint")}</p>
+          <p className="mt-2.5 text-xs text-stone-500 text-center">{t("footerHint")}</p>
         </form>
+      </section>
+
+      <div className="glass-strong flex-1 flex flex-col p-4 md:p-5 min-h-[360px]">
+        {showWelcome && (
+          <p className="text-sm text-stone-600 mb-4 leading-relaxed">{renderWelcome(t("welcome"))}</p>
+        )}
+
+        <h2 className="text-label-lg mb-3">{t("commonQuestions")}</h2>
+        <QuickQuestions
+          questions={questions}
+          loading={loadingQ}
+          onSelect={handleQuickSelect}
+        />
+        {faqFromFallback && !loadingQ && (
+          <p className="text-xs text-stone-500 mb-3 -mt-2">
+            Showing saved answers — tap a question below.{" "}
+            <button type="button" onClick={loadQuestions} className="underline text-amber-800 font-semibold">
+              Retry sync
+            </button>
+          </p>
+        )}
+
+        <div
+          className="flex-1 overflow-y-auto min-h-[140px] max-h-[42vh] md:max-h-[48vh] pr-1 -mr-1 mt-1"
+          aria-live="polite"
+          aria-label="Chat messages"
+        >
+          {messages.length === 0 && !showWelcome && (
+            <p className="text-sm text-stone-400 text-center py-6">—</p>
+          )}
+          {messages.map((m, i) => (
+            <MessageBubble
+              key={i}
+              role={m.role}
+              content={m.content || (streaming && i === messages.length - 1 ? t("thinking") : "")}
+              actions={m.actions}
+            />
+          ))}
+          <div ref={bottomRef} />
+        </div>
       </div>
 
-      <p className="mt-4 mb-6 text-[10px] leading-relaxed text-ink-600 text-center px-2">
-        {t(locale, "disclaimer")}
+      <HouseRulesPanel />
+
+      <p className="mb-6 text-[10px] leading-relaxed text-stone-400 text-center px-2">
+        {t("disclaimer")}
       </p>
     </main>
   );
@@ -241,7 +265,7 @@ function renderWelcome(text) {
   const parts = text.split("**");
   return parts.map((p, i) =>
     i % 2 === 1 ? (
-      <strong key={i} className="text-amber-200">
+      <strong key={i} className="text-amber-800 font-medium">
         {p}
       </strong>
     ) : (

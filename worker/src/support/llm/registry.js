@@ -25,17 +25,18 @@ export async function generateWithFallback(env, args) {
 
     try {
       if (id === "workers-ai" && env.AI) {
-        const model = String(env.WORKERS_AI_MODEL || "@cf/meta/llama-3.1-8b-instruct");
-        const result = await workersAIGenerate(env.AI, model, {
-          ...args,
-          signal: controller.signal,
+        const result = await workersAIGenerate(env.AI, {
+          system: args.system,
+          messages: args.messages,
         });
         clearTimeout(timer);
         if (result.kind === "stream") {
           const textStream = workersAIStreamToTextStream(result.stream);
           return { provider: "workers-ai", stream: textStream };
         }
-        if (result.text) return { provider: "workers-ai", text: result.text };
+        if (result.kind === "text" && result.text) {
+          return { provider: "workers-ai", text: result.text };
+        }
       }
 
       if (id === "groq" && env.GROQ_API_KEY) {

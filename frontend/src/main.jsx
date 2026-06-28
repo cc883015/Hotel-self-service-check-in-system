@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./index.css";
+import AppBackground from "./components/layout/AppBackground.jsx";
 import GuestLayout from "./components/layout/GuestLayout.jsx";
 import GuestPage from "./pages/GuestPage.jsx";
 import SupportPage from "./pages/SupportPage.jsx";
@@ -11,6 +12,7 @@ import AdminPage from "./pages/AdminPage.jsx";
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
+      <AppBackground />
       <Routes>
         <Route element={<GuestLayout />}>
           <Route path="/" element={<GuestPage />} />
